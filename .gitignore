@@ -15,3 +15,9 @@
 *.exe
 *.out
 *.app
+
+main.elf
+main.hex
+test
+.*.swp
+checksize
