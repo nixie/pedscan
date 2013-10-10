@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 	
-	handle = usbOpenDevice(0x16C0, "rf-elect", 0x05DC, "pedalbrd");
+	handle = usbOpenDevice(0x16C0, "www.stud.fit.vutbr.cz/~xferra00", 0x05e4, "pedscan");
 	
 	if(handle == NULL) {
 		fprintf(stderr, "Could not find USB device!\n");
