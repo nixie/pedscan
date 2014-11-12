@@ -14,7 +14,7 @@
 #define USB_LED_ON  1
 #define USB_DATA_OUT 2
 #define LOWEST_NOTE 48
-#define SR_COUNT 16  // number of 74hc165 shift registers attached to SPI
+#define SR_COUNT 2  // number of 74hc165 shift registers attached to SPI
 #define HIST_LEN 2  // HIST_LEN samples are used from history for debouncing
 
 // circular buffer where we keep previous samples for debouncing
@@ -33,11 +33,11 @@ int main() {
     uchar midiMsg[8];
     uint16_t cnt = 0;
 
-    // pin PB0 controlls PL(active low) strobing of parallel load of SRs
+    // pin PB0 - debug diode
     sbi(PORTB, 0);  // PB0 hi
     sbi(DDRB, 0);   // PB0 output
 
-    // pin PB1 - debug diode
+    // pin PB1 controlls PL(active low) strobing of parallel load of SRs
     sbi(PORTB, 1);  // PB1 hi
     sbi(DDRB, 1);  // PB1 output
 
@@ -58,9 +58,9 @@ int main() {
         usbPoll();      // V-USB housekeeping
 
         // strobe PL (parallel load)
-        cbi(PORTB, 0);
+        cbi(PORTB, 1);
         _delay_us(1);
-        sbi(PORTB, 0);
+        sbi(PORTB, 1);
 
         // shift data out of SRs into uC
         for (sr_idx=0; sr_idx < SR_COUNT; sr_idx++){
@@ -122,6 +122,8 @@ int main() {
                             
                             usbSetInterrupt(midiMsg, iii); // send it to host
                             iii = 0;
+                            PORTB^= 0x01;
+
                         }
                     }
                 }
@@ -133,9 +135,10 @@ int main() {
             prev_state[sr_idx] = filtered[sr_idx];
         }
 
+
         // debug timer
-        if (++cnt == 1000){
-            PORTB ^= 0x02;  // toggle debug LED
+        if (++cnt == 2000){
+            PORTB ^= 0x01;  // toggle debug LED
             cnt = 0;
         }
     }
@@ -163,10 +166,10 @@ USB_PUBLIC uchar usbFunctionSetup(uchar data[8]) {
     switch(rq->bRequest) { // custom command is in the bRequest field
     // these commands can be invoked from commandline with ./test (usbtest.c)
     case USB_LED_ON:
-        PORTB |= 0x02; // turn debug LED on
+        PORTB |= 0x01; // turn debug LED on
         return 0;
     case USB_LED_OFF: 
-        PORTB &= ~0x02; // turn debug LED off
+        PORTB &= ~0x01; // turn debug LED off
         return 0;
     case USB_DATA_OUT:
         // dump key states to host
