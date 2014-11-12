@@ -1,0 +1,14 @@
+Manual+stops controller
+    16xSRs + patice + pullups + kondíky 117+40+63+18,-
+    Univ. DPS   95,-
+    SPI header
+    Atmega + patice + krystal + kondíky 84+?+9
+    zener. diody, odpory, USB konektor  2+nic+15,-
+    kabel 60-ti žilový 3m       177,-
+    USB A-B 3m      32,-
+
+
+Pedal controller
+    reed switches
+    magnety
+
