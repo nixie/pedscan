@@ -13,7 +13,8 @@
 #define USB_LED_OFF 0
 #define USB_LED_ON  1
 #define USB_DATA_OUT 2
-#define LOWEST_NOTE 48
+#define NOTE_C2 36
+#define NOTE_C4 60  // middle C
 #define SR_COUNT 2  // number of 74hc165 shift registers attached to SPI
 #define HIST_LEN 2  // HIST_LEN samples are used from history for debouncing
 
@@ -29,9 +30,9 @@ uchar prev_state[SR_COUNT];
 
 
 int main() {
-    uchar i, j, bitpos,  sr_idx, iii;
+    uchar i, j, bitpos,  sr_idx, iii, channel;
     uchar midiMsg[8];
-    uint16_t cnt = 0;
+    uint16_t cnt = 0, io_number, note;
 
     // pin PB0 - debug diode
     sbi(PORTB, 0);  // PB0 hi
@@ -98,18 +99,55 @@ int main() {
                 // locate changes and send them directly to USB host
                 for (bitpos=0; bitpos < 8; bitpos++){
                     if (mask & (0x01 << bitpos)){
+                        io_number=sr_idx*8+bitpos;
+                        // decode channel and note code. Layout:
+                        //                  hc165   hc165   hc165   hc165
+                        // PC <=  DINX4-1   ped     ped     ped     ped     ...
+                        //    <=  DINX4-2   I.      I.      I.      I.      ...
+                        //    <=  DINX4-3   I.      I.      I.      II.     ...
+                        //    <=  DINX4-4   II.     II.     II.     II.     ...
+                        //    <=  DINX4-5   II.     II.     stops   stops
+                        //
+                        // it should map to these channels and notes
+                        //                  |8notes |8notes |8notes |8notes|
+                        //                  0/36..........................65
+                        //                  1/36..........................65
+                        //                  1/66.................91 2/36..43
+                        //                  2/44..........................75
+                        //                  2/76.........91 3/1...........16
+                        channel=0;
+                        note=NOTE_C2+io_number;
+                        // we are already done for pedal inputs
+                        if (io_number >= 32 && io_number < 88){
+                            // I. man.
+                            channel=1;
+                            note-=32;
+                        } else if (io_number >= 88 && io_number < 144){
+                            // II. man.
+                            channel=2;
+                            note-=88;
+                        } else if (io_number >= 144 && io_number < 160){
+                            // stops
+                            channel=3;
+                            note=io_number-143;
+                        } else {
+                            // error - middle C on channel 4
+                            channel=4;
+                            note=NOTE_C4;
+                        }
+
                         iii=0;
                         if (prev_state[sr_idx] & (0x01 << bitpos)){
                             // keypress 
                             midiMsg[iii++] = 0x09;  // USBMIDI note on/off
-                            midiMsg[iii++] = 0x90;  // MIDI note on/off
-                            midiMsg[iii++] = LOWEST_NOTE + 8*sr_idx + bitpos;
+                            midiMsg[iii++] = 0x90+channel;  // MIDI note on/off
+                            midiMsg[iii++] = note;
                             midiMsg[iii++] = 0x7f;  // velocity
                         }else{
                             // release
                             midiMsg[iii++] = 0x08;
-                            midiMsg[iii++] = 0x80;
-                            midiMsg[iii++] = LOWEST_NOTE + 8*sr_idx + bitpos;
+                            midiMsg[iii++] = 0x80+channel;
+                            midiMsg[iii++] = note;
                             midiMsg[iii++] = 0x00;
                         }
                         
