@@ -15,8 +15,8 @@
 #define USB_DATA_OUT 2
 #define NOTE_C2 36
 #define NOTE_C4 60  // middle C
-#define SR_COUNT 2  // number of 74hc165 shift registers attached to SPI
-#define HIST_LEN 2  // HIST_LEN samples are used from history for debouncing
+#define SR_COUNT 14  // number of 74hc165 shift registers attached to SPI
+#define HIST_LEN 10  // HIST_LEN samples are used from history for debouncing
 
 // circular buffer where we keep previous samples for debouncing
 // old samples are constantly overwriten with new ones, there is no need to
@@ -104,9 +104,13 @@ int main() {
                         //                  hc165   hc165   hc165   hc165
                         // PC <=  DINX4-1   ped     ped     ped     ped     ...
                         //    <=  DINX4-2   I.      I.      I.      I.      ...
-                        //    <=  DINX4-3   I.      I.      I.      II.     ...
+                        //    <=  DINX4-3   I.      I.      I.      -       ...
+                        //    <=  DINX4-4   stops   stops
+                        //  end of my actual one-manual configuration
+                        //
                         //    <=  DINX4-4   II.     II.     II.     II.     ...
-                        //    <=  DINX4-5   II.     II.     stops   stops
+                        //    <=  DINX4-5   II.     II.     II.     -       ...
+                        //    <=  DINX4-6   stops   stops
                         //
                         // it should map to these channels and notes
                         //                  |8notes |8notes |8notes |8notes|
@@ -118,7 +122,13 @@ int main() {
                         channel=0;
                         note=NOTE_C2+io_number;
                         // we are already done for pedal inputs
-                        if (io_number >= 32 && io_number < 88){
+                        /*
+                        
+
+                        if (io_number >= 0 && io_number < 32){
+                            // we are already done for pedal inputs
+                            ;
+                        } else if (io_number >= 32 && io_number < 88){
                             // I. man.
                             channel=1;
                             note-=32;
@@ -130,6 +140,25 @@ int main() {
                             // stops
                             channel=3;
                             note=io_number-143;
+                        } else {
+                            // error - middle C on channel 4
+                            channel=4;
+                            note=NOTE_C4;
+                        }
+                        */
+
+                        // without II. manual
+                        if (io_number >= 0 && io_number < 32){
+                            // we are already done for pedal inputs
+                            ;
+                        } else if (io_number >= 32 && io_number < 88){
+                            // I. man.
+                            channel=1;
+                            note-=32;
+                        } else if (io_number >= 96 && io_number < 112){
+                            // stops
+                            channel=3;
+                            note=io_number-96;
                         } else {
                             // error - middle C on channel 4
                             channel=4;
