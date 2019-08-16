@@ -21,6 +21,8 @@ Daisy-chained 74HC165 shift registers are connected to atmega's SPI pins.
 USB cable is connected to atmega as described in V-USB documentation. I use 3V6 zener-diodes to drop voltage on USB data pins.
 In the future I might create a schematic diagram, but there is nothing special with this, only that all shift registers are latched using PB0.
 
+<img src="./board.jpg" height="350"><img src="./connections.jpg" height="350">
+
 Firmware
 --------
 Project code is based on AVR USB controller [V-USB-MIDI](http://cryptomys.de/horo/V-USB-MIDI/).
